@@ -27,6 +27,7 @@ function renderChoices(root, q, answer, callbacks) {
 }
 
 function renderOrder(root, q, answer, callbacks) {
+  root.insertAdjacentHTML('beforeend','<p class="notice answer-guidance">رتّب العناصر باستخدام زري التحريك لأعلى ولأسفل. لا تحتاج إلى السحب.</p>');
   const current = Array.isArray(answer) && answer.length === q.options.length ? answer : [...q.displayOptions];
   const list = document.createElement('div'); list.className = 'order-list';
   current.forEach((item, index) => {
@@ -41,6 +42,7 @@ function renderOrder(root, q, answer, callbacks) {
 }
 
 function renderMatching(root, q, answer = {}, callbacks) {
+  root.insertAdjacentHTML('beforeend','<p class="notice answer-guidance">اختر العنصر المطابق لكل بند من القوائم التالية.</p>');
   q.left_items.forEach((left, index) => {
     const row = document.createElement('div'); row.className = 'match-row';
     const label = document.createElement('label'); label.htmlFor = `match-${index}`; label.textContent = left;
