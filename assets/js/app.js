@@ -1,0 +1,14 @@
+import { initTheme } from './theme.js';
+import { initAccessibility } from './accessibility.js';
+import { getActiveAttempt, clearAllLocalData } from './storage.js';
+import { getHistory, deleteHistoryItem, getWrongQuestionIds } from './history.js';
+import { LABELS } from './config.js';
+
+initTheme();initAccessibility();
+const page=document.body.dataset.page;
+if('serviceWorker'in navigator&&location.protocol.startsWith('http'))navigator.serviceWorker.register('./service-worker.js').then(reg=>{reg.addEventListener('updatefound',()=>{const w=reg.installing;w?.addEventListener('statechange',()=>{if(w.state==='installed'&&navigator.serviceWorker.controller){const n=document.querySelector('[data-update-notice]');if(n)n.hidden=false}})})}).catch(error=>console.warn('تعذر تسجيل العمل دون اتصال',error));
+
+if(page==='home')initHome();
+async function initHome(){const active=getActiveAttempt(),resume=document.querySelector('[data-resume]');if(active?.status==='active'){resume.hidden=false;resume.querySelector('a').href='./exam.html?resume=1'}const history=getHistory(),root=document.querySelector('[data-history]');root.innerHTML=history.length?history.map(item=>`<tr><td>${new Date(item.completedAt).toLocaleString('ar')}</td><td>${LABELS[item.mode]||item.mode}</td><td>${item.total}</td><td>${item.percentage}%</td><td>${formatTime(item.usedSeconds)}</td><td><a class="btn btn-secondary" href="./results.html?id=${encodeURIComponent(item.id)}">عرض</a> <button class="btn btn-ghost" data-delete="${item.id}">حذف</button></td></tr>`).join(''):'<tr><td colspan="6">لا توجد محاولات مسجلة بعد.</td></tr>';root.addEventListener('click',e=>{const b=e.target.closest('[data-delete]');if(b&&confirm('هل تريد حذف هذه المحاولة من هذا الجهاز؟')){deleteHistoryItem(b.dataset.delete);initHome()}});const wrong=getWrongQuestionIds();document.querySelector('[data-mistakes-count]').textContent=`${wrong.length} سؤالًا فريدًا`;document.querySelector('[data-mistakes-start]').addEventListener('click',e=>{if(!wrong.length){e.preventDefault();alert('لا توجد أسئلة خاطئة محفوظة للمراجعة حتى الآن.')}});document.querySelector('[data-clear-all]').addEventListener('click',()=>{if(confirm('سيتم حذف المحاولة الحالية وسجل النتائج وتفضيلات العرض من هذا المتصفح. لا يمكن التراجع. هل تريد المتابعة؟')){clearAllLocalData();location.reload()}});document.querySelector('[data-custom-form]').addEventListener('submit',customSubmit)}
+function customSubmit(e){e.preventDefault();const f=new FormData(e.currentTarget),p=new URLSearchParams({mode:'custom',count:f.get('count'),minutes:f.get('minutes')});['domain','approach','difficulty'].forEach(k=>f.getAll(k).forEach(v=>p.append(k,v)));location.href=`./exam.html?${p}`}
+function formatTime(sec=0){const h=Math.floor(sec/3600),m=Math.floor(sec%3600/60);return h?`${h}س ${m}د`:`${m} دقيقة`}
